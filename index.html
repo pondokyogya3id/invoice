@@ -364,7 +364,52 @@
         }
     }
 
+    function cetakPDF() {
+        const element = document.getElementById('invoicePDF');
+        const nama = document.getElementById('inNama').value || "Tamu";
+        const jenis = document.getElementById('inJenisDokumen').value === 'INVOICE' ? 'Invoice' : 'Kwitansi';
 
+        // Paksa elemen invoice ke posisi paling atas-kiri secara absolut
+        const prevPosition = element.style.position;
+        const prevLeft = element.style.left;
+        const prevTop = element.style.top;
+        const prevZIndex = element.style.zIndex;
+
+        element.style.position = 'fixed';
+        element.style.left = '0px';
+        element.style.top = '0px';
+        element.style.zIndex = '99999';
+
+        window.scrollTo(0, 0);
+
+        const opt = {
+            margin:       0,
+            filename:     `${jenis}_PY3_${nama}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1200
+            }, 
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Kembalikan ke posisi layout normal
+            element.style.position = prevPosition;
+            element.style.left = prevLeft;
+            element.style.top = prevTop;
+            element.style.zIndex = prevZIndex;
+        }).catch(err => {
+            console.error(err);
+            element.style.position = prevPosition;
+            element.style.left = prevLeft;
+            element.style.top = prevTop;
+            element.style.zIndex = prevZIndex;
+        });
+    }
 </script>
 
 </body>
