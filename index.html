@@ -20,7 +20,7 @@
         
         .container {
             display: flex;
-            flex-wrap: wrap; /* Pada layar kecil, kotak kiri dan kanan akan turun alih-alih saling gencet */
+            flex-wrap: wrap;
             gap: 20px;
             width: 100%;
             max-width: 1400px;
@@ -52,7 +52,7 @@
         /* --- STYLING INVOICE / PDF PREVIEW (Sisi Kanan) --- */
         .invoice-wrapper {
             flex: 2;
-            overflow-x: auto; /* Mencegah terpotong, memunculkan scrollbar jika layar kekecilan */
+            overflow-x: auto;
             padding-bottom: 20px;
         }
         
@@ -60,13 +60,13 @@
             background: white;
             padding: 40px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 210mm; /* Lebar A4 */
-            min-width: 210mm; /* KUNCI: Jangan biarkan layar mengecilkan elemen ini */
-            height: 297mm; /* Tinggi A4 */
+            width: 210mm;
+            min-width: 210mm;
+            height: 297mm;
             box-sizing: border-box;
             color: #333;
             font-family: Arial, sans-serif;
-            position: relative; /* Kunci footer di bawah */
+            position: relative;
             margin: 0 auto;
         }
 
@@ -98,7 +98,7 @@
         .text-belum { color: #cc0000; }
         .text-lunas { color: #008000; }
 
-        /* Sisa Tampilan */
+        /* Detail Information */
         .inv-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; line-height: 1.6;}
         .inv-info-box { width: 48%; }
         .inv-info-box strong { display: inline-block; width: 100px; }
@@ -365,30 +365,41 @@
     }
 
     function cetakPDF() {
-        // Tarik halaman web ke sudut paling atas-kiri untuk memastikan kamera memotret titik nol
-        window.scrollTo(0, 0);
+        const originalElement = document.getElementById('invoicePDF');
+        
+        // Kloning elemen invoice agar bisa diolah secara mandiri
+        const clone = originalElement.cloneNode(true);
+        
+        // Posisikan elemen klon di koordinat (0,0) di luar area pandang normal
+        clone.style.position = 'fixed';
+        clone.style.left = '0';
+        clone.style.top = '0';
+        clone.style.zIndex = '-9999';
+        clone.style.margin = '0';
+        
+        document.body.appendChild(clone);
 
-        setTimeout(() => {
-            const element = document.getElementById('invoicePDF');
-            const nama = document.getElementById('inNama').value || "Tamu";
-            const jenis = document.getElementById('inJenisDokumen').value === 'INVOICE' ? 'Invoice' : 'Kwitansi';
-            
-            const opt = {
-                margin:       0,
-                filename:     `${jenis}_PY3_${nama}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    scrollY: 0, 
-                    scrollX: 0,
-                    windowWidth: 1200 // KUNCI UTAMA: Memaksa area tangkapan lebar 1200px terlepas dari ukuran layar perangkat
-                }, 
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+        const nama = document.getElementById('inNama').value || "Tamu";
+        const jenis = document.getElementById('inJenisDokumen').value === 'INVOICE' ? 'Invoice' : 'Kwitansi';
 
-            html2pdf().set(opt).from(element).save();
-        }, 500); // Saya naikkan jeda sedikit agar layout selesai menata saat di-scroll
+        const opt = {
+            margin:       0,
+            filename:     `${jenis}_PY3_${nama}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                scrollX: 0,
+                scrollY: 0
+            }, 
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Render PDF menggunakan elemen klon yang terisolasi
+        html2pdf().set(opt).from(clone).save().then(() => {
+            // Hapus elemen klon setelah cetak selesai
+            document.body.removeChild(clone);
+        });
     }
 </script>
 
