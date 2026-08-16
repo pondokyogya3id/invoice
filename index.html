@@ -68,7 +68,7 @@
             position: relative; /* Penting untuk mengunci footer di bawah */
         }
 
-        /* Tampilan Header Baru */
+        /* Tampilan Header */
         .inv-top-header {
             display: flex;
             justify-content: space-between;
@@ -319,7 +319,7 @@
         // Update Jenis Dokumen
         document.getElementById('outJenisDokumen').innerText = jenisDokumen;
         
-        // Update nomor depan (INV/ vs BUKTI/)
+        // Update nomor depan (INV/ vs BKT/)
         const currentRef = document.getElementById('outNoInv').innerText.split('/').slice(1).join('/');
         if (jenisDokumen === 'INVOICE') {
             document.getElementById('outNoInv').innerText = 'INV/' + currentRef;
@@ -368,7 +368,7 @@
     }
 
     function cetakPDF() {
-        // SOLUSI PDF TURUN: Paksa browser scroll ke atas (0,0) sebelum render
+        // Tarik halaman web ke atas agar tidak ada bagian terpotong vertikal
         window.scrollTo(0, 0);
 
         setTimeout(() => {
@@ -380,12 +380,13 @@
                 margin:       0,
                 filename:     `${jenis}_PY3_${nama}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, x: 0, y: 0 }, 
+                // Saya telah MENGHAPUS x: 0 dan y: 0 di bawah ini agar menyesuaikan posisi container
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save();
-        }, 300); // Beri jeda 300ms agar browser selesai scroll ke atas sebelum difoto
+        }, 300);
     }
 </script>
 
