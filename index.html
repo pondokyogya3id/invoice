@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Invoice Pondok Yogya 3</title>
+    
+    <!-- Memuat Library untuk Export ke PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            justify-content: center;
+        }
+
+        /* --- STYLING FORM (Sisi Kiri) --- */
+        .form-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+        }
+        .form-panel h3 { color: #0194f3; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: 600; display: block; margin-bottom: 5px; color: #333; font-size: 13px;}
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccd1d9; border-radius: 6px; box-sizing: border-box; font-size: 14px;}
+        .row-group { display: flex; gap: 10px; }
+        .row-group .form-group { flex: 1; }
+        .btn-print {
+            width: 100%; padding: 12px; background-color: #ff5e1f; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-print:hover { background-color: #e04a11; }
+
+        /* --- STYLING INVOICE / PDF PREVIEW (Sisi Kanan) --- */
+        .invoice-wrapper {
+            flex: 2;
+            min-width: 600px;
+            display: flex;
+            justify-content: center;
+        }
+        .invoice-panel {
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 210mm; /* Lebar kertas A4 */
+            min-height: 297mm; /* Tinggi kertas A4 */
+            box-sizing: border-box;
+            color: #333;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+        /* Tampilan Dalam Invoice */
+        .inv-header { text-align: center; border-bottom: 2px solid #2e7d32; padding-bottom: 15px; margin-bottom: 20px;}
+        .inv-header h1 { color: #2e7d32; margin: 0; font-size: 28px; letter-spacing: 1px;}
+        .inv-header p { margin: 5px 0 0 0; font-size: 14px; color: #555; }
+        
+        .inv-title { text-align: center; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px;}
+        
+        .inv-status { text-align: center; font-weight: bold; padding: 5px; border-radius: 4px; display: inline-block; margin-bottom: 20px; font-size: 14px;}
+        .status-lunas { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-belum { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .inv-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; line-height: 1.6;}
+        .inv-info-box { width: 48%; }
+        .inv-info-box strong { display: inline-block; width: 100px; }
+
+        table.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+        .inv-table th, .inv-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+        .inv-table th { background-color: #f0f0f0; font-weight: bold; text-align: center;}
+        .text-right { text-align: right !important; }
+        .text-center { text-align: center !important; }
+        .total-row { font-weight: bold; background-color: #f0f0f0; }
+
+        .inv-payment { font-size: 13px; margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #2e7d32;}
+        .inv-payment strong { display: block; margin-bottom: 5px; color: #2e7d32;}
+
+        .inv-notes { font-size: 11px; margin-bottom: 30px;}
+        .inv-notes h4 { margin: 0 0 5px 0; font-size: 12px; }
+        .inv-notes ul { margin: 0; padding-left: 15px; }
+        
+        .inv-footer { border-top: 2px solid #2e7d32; padding-top: 10px; text-align: center; font-size: 12px; color: #555;}
+        .inv-footer strong { color: #2e7d32; display: block; font-size: 14px; margin-bottom: 3px;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- PANEL FORM INPUT -->
+    <div class="form-panel">
+        <h3>Data Invoice</h3>
+        
+        <div class="form-group">
+            <label>Nama Tamu</label>
+            <input type="text" id="inNama" placeholder="Masukkan nama" oninput="updateInvoice()">
+        </div>
+        <div class="form-group">
+            <label>Nomor Telepon</label>
+            <input type="text" id="inTelp" placeholder="Contoh: 081234567890" oninput="updateInvoice()">
+        </div>
+        
+        <div class="row-group">
+            <div class="form-group">
+                <label>Check-in</label>
+                <input type="date" id="inCheckin" onchange="updateInvoice()">
+            </div>
+            <div class="form-group">
+                <label>Check-out</label>
+                <input type="date" id="inCheckout" onchange="updateInvoice()">
+            </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+
+        <div class="row-group">
+            <div class="form-group">
+                <label>Jml Malam (Weekday)</label>
+                <input type="number" id="inWeekday" value="0" min="0" oninput="updateInvoice()">
+            </div>
+            <div class="form-group">
+                <label>Jml Malam (Holiday)</label>
+                <input type="number" id="inHoliday" value="0" min="0" oninput="updateInvoice()">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Extra Bed (Jumlah Barang)</label>
+            <input type="number" id="inExtra" value="0" min="0" oninput="updateInvoice()">
+        </div>
+        <div class="form-group">
+            <label>Harga Extra Bed (Satuan Rp)</label>
+            <input type="number" id="inHargaExtra" value="0" min="0" oninput="updateInvoice()">
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
+
+        <div class="form-group">
+            <label>Status Pembayaran</label>
+            <select id="inStatus" onchange="updateInvoice()">
+                <option value="belum">Belum Dibayar</option>
+                <option value="lunas">Lunas</option>
+            </select>
+        </div>
+
+        <button class="btn-print" onclick="cetakPDF()">Cetak & Download PDF</button>
+    </div>
+
+
+    <!-- PANEL INVOICE (AKAN DI CONVERT KE PDF) -->
+    <div class="invoice-wrapper">
+        <div class="invoice-panel" id="invoicePDF">
+            
+            <div class="inv-header">
+                <h1>Pondok Yogya 3</h1>
+                <p>HOMESTAY & KOS</p>
+            </div>
+
+            <div class="inv-title">INVOICE</div>
+            <div style="text-align: center;">
+                <div class="inv-status status-belum" id="outStatus">Status : Belum Dibayar</div>
+            </div>
+
+            <div class="inv-info">
+                <div class="inv-info-box">
+                    <strong>DITERBITKAN UNTUK:</strong><br>
+                    Nama Tamu &nbsp;&nbsp;: <span id="outNama">-</span><br>
+                    No. Telepon &nbsp;: <span id="outTelp">-</span>
+                </div>
+                <div class="inv-info-box text-right">
+                    <strong>DETAIL BOOKING:</strong><br>
+                    No. Invoice &nbsp;&nbsp;&nbsp;: <span id="outNoInv">INV/PY3/...</span><br>
+                    Tanggal Invoice : <span id="outTglInv">-</span><br>
+                    Check-in &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="outCheckin">-</span><br>
+                    Check-out &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="outCheckout">-</span>
+                </div>
+            </div>
+
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Deskripsi</th>
+                        <th style="width: 10%;">Malam</th>
+                        <th style="width: 25%;">Harga/Malam</th>
+                        <th style="width: 25%;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Room Rate – Holiday/Peak Season</td>
+                        <td class="text-center" id="outMalamHoliday">-</td>
+                        <td class="text-right">Rp. 650.000</td>
+                        <td class="text-right" id="outSubHoliday">-</td>
+                    </tr>
+                    <tr>
+                        <td>Room Rate - Weekday</td>
+                        <td class="text-center" id="outMalamWeekday">-</td>
+                        <td class="text-right">Rp. 500.000</td>
+                        <td class="text-right" id="outSubWeekday">-</td>
+                    </tr>
+                    <tr>
+                        <td>Extra Bed</td>
+                        <td class="text-center" id="outMalamExtra">-</td>
+                        <td class="text-right" id="outHargaExtra">-</td>
+                        <td class="text-right" id="outSubExtra">-</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="3" class="text-right">TOTAL TAGIHAN</td>
+                        <td class="text-right" id="outTotal">Rp. 0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="inv-payment">
+                <strong>Metode Pembayaran / Transfer:</strong>
+                Bank BCA: 8915156505 a.n. Aufira Kusmayda<br>
+                <em style="font-size: 11px;">*Harap simpan bukti pembayaran ini sebagai bukti transaksi sah.</em>
+            </div>
+
+            <div class="inv-notes">
+                <h4>Catatan :</h4>
+                <ul>
+                    <li>Untuk mengamankan tanggal menginap, diperlukan pembayaran DP 30% dari harga total.</li>
+                    <li>DP bersifat non-refundable dan tidak dapat dikembalikan apabila terjadi pembatalan.</li>
+                    <li>Pelunasan dilakukan paling lambat pada hari H sebelum check-in.</li>
+                    <li>Check-in dapat dilakukan setelah pembayaran dilunasi.</li>
+                    <li>Check-in dan check-out pukul 13.00 WIB.</li>
+                    <li>Tamu wajib menunjukkan kartu identitas fisik yang masih berlaku (KTP/SIM/Paspor) pada saat proses check-in.</li>
+                    <li>Perubahan tanggal menginap dapat dilakukan dengan konfirmasi terlebih dahulu dan menyesuaikan ketersediaan.</li>
+                </ul>
+            </div>
+
+            <!-- Posisi Absolut di Bawah -->
+            <div style="position: absolute; bottom: 40px; left: 40px; right: 40px;">
+                <div class="inv-footer">
+                    <strong>HUBUNGI KAMI</strong>
+                    089501808049 (Marketing) | pondokyogya3.id@gmail.com<br>
+                    Jl. Rajawali Raya, No.11 Beran Lor, Tridadi, Kec. Sleman, DIY
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Format mata uang Rupiah
+    const formatRp = (angka) => {
+        if(angka === 0) return "-";
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    };
+
+    // Format Tanggal (Misal: 15 Agustus 2026)
+    const formatTanggal = (tanggal) => {
+        if(!tanggal) return "-";
+        const dateObj = new Date(tanggal);
+        return dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
+    // Buat Nomor Invoice Otomatis
+    function generateNomorInvoice() {
+        const today = new Date();
+        const tahun = today.getFullYear();
+        const bulan = String(today.getMonth() + 1).padStart(2, '0');
+        // Angka acak 3 digit agar unik
+        const randomStr = String(Math.floor(Math.random() * 900) + 100); 
+        return `INV/PY3/${tahun}/${bulan}/${randomStr}`;
+    }
+
+    // Set nilai awal saat halaman diload
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('outNoInv').innerText = generateNomorInvoice();
+        document.getElementById('outTglInv').innerText = formatTanggal(new Date());
+    });
+
+    // Fungsi update real-time
+    function updateInvoice() {
+        // Ambil data form
+        const nama = document.getElementById('inNama').value || "..................";
+        const telp = document.getElementById('inTelp').value || "..................";
+        const checkin = document.getElementById('inCheckin').value;
+        const checkout = document.getElementById('inCheckout').value;
+        const status = document.getElementById('inStatus').value;
+
+        // Ambil data hitungan
+        const qtyWeekday = parseInt(document.getElementById('inWeekday').value) || 0;
+        const qtyHoliday = parseInt(document.getElementById('inHoliday').value) || 0;
+        const qtyExtra = parseInt(document.getElementById('inExtra').value) || 0;
+        const hargaExtra = parseInt(document.getElementById('inHargaExtra').value) || 0;
+
+        // Hitung Subtotal
+        const hargaWeekday = 500000;
+        const hargaHoliday = 650000;
+        
+        const subWeekday = qtyWeekday * hargaWeekday;
+        const subHoliday = qtyHoliday * hargaHoliday;
+        const subExtra = qtyExtra * hargaExtra;
+        const total = subWeekday + subHoliday + subExtra;
+
+        // Terapkan ke tampilan HTML PDF
+        document.getElementById('outNama').innerText = nama;
+        document.getElementById('outTelp').innerText = telp;
+        document.getElementById('outCheckin').innerText = formatTanggal(checkin);
+        document.getElementById('outCheckout').innerText = formatTanggal(checkout);
+
+        // Update Tabel
+        document.getElementById('outMalamWeekday').innerText = qtyWeekday > 0 ? qtyWeekday : "-";
+        document.getElementById('outSubWeekday').innerText = subWeekday > 0 ? formatRp(subWeekday) : "-";
+
+        document.getElementById('outMalamHoliday').innerText = qtyHoliday > 0 ? qtyHoliday : "-";
+        document.getElementById('outSubHoliday').innerText = subHoliday > 0 ? formatRp(subHoliday) : "-";
+
+        document.getElementById('outMalamExtra').innerText = qtyExtra > 0 ? qtyExtra : "-";
+        document.getElementById('outHargaExtra').innerText = hargaExtra > 0 ? formatRp(hargaExtra) : "-";
+        document.getElementById('outSubExtra').innerText = subExtra > 0 ? formatRp(subExtra) : "-";
+
+        document.getElementById('outTotal').innerText = formatRp(total);
+
+        // Status Visual
+        const elStatus = document.getElementById('outStatus');
+        if (status === 'lunas') {
+            elStatus.innerText = "Status : Lunas";
+            elStatus.className = "inv-status status-lunas";
+        } else {
+            elStatus.innerText = "Status : Belum Dibayar";
+            elStatus.className = "inv-status status-belum";
+        }
+    }
+
+    // Fungsi Cetak ke PDF
+    function cetakPDF() {
+        const element = document.getElementById('invoicePDF');
+        const nama = document.getElementById('inNama').value || "Tamu";
+        
+        // Pengaturan render PDF
+        const opt = {
+            margin:       0,
+            filename:     `Invoice_PY3_${nama}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Memanggil Library html2pdf
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+
+</body>
+</html>
