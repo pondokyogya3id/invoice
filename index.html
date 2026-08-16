@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Invoice Pondok Yogya 3</title>
+    <title>Generator Dokumen Pondok Yogya 3</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -65,11 +65,7 @@
             box-sizing: border-box;
             color: #333;
             font-family: Arial, sans-serif;
-            
-            /* Tata letak Flexbox agar footer bisa didorong ke bawah */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Mencegah halaman kedua */
+            position: relative; /* Penting untuk mengunci footer di bawah */
         }
 
         /* Tampilan Header Baru */
@@ -95,7 +91,7 @@
             box-sizing: border-box;
         }
 
-        .inv-title { color: white; font-size: 32px; font-weight: bold; letter-spacing: 2px; margin-bottom: 15px;}
+        .inv-title { color: white; font-size: 26px; font-weight: bold; letter-spacing: 2px; margin-bottom: 15px; text-align: right;}
         .inv-status { background-color: white; padding: 8px 20px; border-radius: 4px; font-weight: bold; font-size: 14px; color: #333;}
         .text-belum { color: #cc0000; }
         .text-lunas { color: #008000; }
@@ -119,10 +115,12 @@
         .inv-notes h4 { margin: 0 0 5px 0; font-size: 12px; }
         .inv-notes ul { margin: 0; padding-left: 15px; }
         
-        /* Modifikasi Posisi Footer */
+        /* Posisi Absolut Kunci di Bawah */
         .footer-wrapper {
-            margin-top: auto; /* Mendorong footer ke ujung bawah kotak flexbox */
-            width: 100%;
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
         }
         
         .inv-footer { border-top: 2px solid #053b0e; padding-top: 10px; text-align: center; font-size: 12px; color: #555;}
@@ -134,8 +132,17 @@
 <div class="container">
     
     <div class="form-panel">
-        <h3>Data Invoice</h3>
+        <h3>Data Dokumen</h3>
         
+        <!-- PILIHAN JENIS DOKUMEN -->
+        <div class="form-group">
+            <label>Jenis Dokumen</label>
+            <select id="inJenisDokumen" onchange="updateInvoice()">
+                <option value="INVOICE">Invoice (Tagihan)</option>
+                <option value="BUKTI PEMBAYARAN">Bukti Pembayaran (Kwitansi)</option>
+            </select>
+        </div>
+
         <div class="form-group"><label>Nama Tamu</label><input type="text" id="inNama" placeholder="Masukkan nama" oninput="updateInvoice()"></div>
         <div class="form-group"><label>Nomor Telepon</label><input type="text" id="inTelp" placeholder="Contoh: 081234567890" oninput="updateInvoice()"></div>
         
@@ -175,7 +182,8 @@
                     <img src="https://raw.githubusercontent.com/pondokyogya3id/invoice/main/logo.png" alt="Logo Pondok Yogya 3">
                 </div>
                 <div class="inv-header-right">
-                    <div class="inv-title">INVOICE</div>
+                    <!-- JUDUL DOKUMEN OTOMATIS BERUBAH -->
+                    <div class="inv-title" id="outJenisDokumen">INVOICE</div>
                     <div class="inv-status" id="outStatus">Status : <span class="text-belum">Belum Dibayar</span></div>
                 </div>
             </div>
@@ -188,8 +196,8 @@
                 </div>
                 <div class="inv-info-box text-right">
                     <strong>DETAIL BOOKING:</strong><br>
-                    No. Invoice &nbsp;&nbsp;&nbsp;: <span id="outNoInv">INV/PY3/...</span><br>
-                    Tanggal Invoice : <span id="outTglInv">-</span><br>
+                    No. Referensi &nbsp;&nbsp;: <span id="outNoInv">INV/PY3/...</span><br>
+                    Tanggal Terbit : <span id="outTglInv">-</span><br>
                     Check-in &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="outCheckin">-</span><br>
                     Check-out &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="outCheckout">-</span>
                 </div>
@@ -233,7 +241,7 @@
             <div class="inv-payment">
                 <strong>Metode Pembayaran / Transfer:</strong>
                 Bank BCA: 8915156505 a.n. Aufira Kusmayda<br>
-                <em style="font-size: 11px;">*Harap simpan bukti pembayaran ini sebagai bukti transaksi sah.</em>
+                <em style="font-size: 11px;">*Harap simpan bukti ini sebagai referensi transaksi sah.</em>
             </div>
 
             <div class="inv-notes">
@@ -249,7 +257,7 @@
                 </ul>
             </div>
 
-            <!-- Bagian Footer dengan Flexbox Auto-Margin -->
+            <!-- Posisi Absolut Terkunci di Bawah -->
             <div class="footer-wrapper">
                 <div class="inv-footer">
                     <strong>HUBUNGI KAMI</strong>
@@ -279,15 +287,16 @@
         const tahun = today.getFullYear();
         const bulan = String(today.getMonth() + 1).padStart(2, '0');
         const randomStr = String(Math.floor(Math.random() * 900) + 100); 
-        return `INV/PY3/${tahun}/${bulan}/${randomStr}`;
+        return `PY3/${tahun}/${bulan}/${randomStr}`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('outNoInv').innerText = generateNomorInvoice();
+        document.getElementById('outNoInv').innerText = "INV/" + generateNomorInvoice();
         document.getElementById('outTglInv').innerText = formatTanggal(new Date());
     });
 
     function updateInvoice() {
+        const jenisDokumen = document.getElementById('inJenisDokumen').value;
         const nama = document.getElementById('inNama').value || "..................";
         const telp = document.getElementById('inTelp').value || "..................";
         const checkin = document.getElementById('inCheckin').value;
@@ -306,6 +315,17 @@
         const subHoliday = qtyHoliday * hargaHoliday;
         const subExtra = qtyExtra * hargaExtra;
         const total = subWeekday + subHoliday + subExtra;
+
+        // Update Jenis Dokumen
+        document.getElementById('outJenisDokumen').innerText = jenisDokumen;
+        
+        // Update nomor depan (INV/ vs BUKTI/)
+        const currentRef = document.getElementById('outNoInv').innerText.split('/').slice(1).join('/');
+        if (jenisDokumen === 'INVOICE') {
+            document.getElementById('outNoInv').innerText = 'INV/' + currentRef;
+        } else {
+            document.getElementById('outNoInv').innerText = 'BKT/' + currentRef;
+        }
 
         document.getElementById('outNama').innerText = nama;
         document.getElementById('outTelp').innerText = telp;
@@ -348,19 +368,24 @@
     }
 
     function cetakPDF() {
-        const element = document.getElementById('invoicePDF');
-        const nama = document.getElementById('inNama').value || "Tamu";
-        
-        // Penambahan scrollY: 0 untuk menghindari PDF terpotong/turun
-        const opt = {
-            margin:       0,
-            filename:     `Invoice_PY3_${nama}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+        // SOLUSI PDF TURUN: Paksa browser scroll ke atas (0,0) sebelum render
+        window.scrollTo(0, 0);
 
-        html2pdf().set(opt).from(element).save();
+        setTimeout(() => {
+            const element = document.getElementById('invoicePDF');
+            const nama = document.getElementById('inNama').value || "Tamu";
+            const jenis = document.getElementById('inJenisDokumen').value === 'INVOICE' ? 'Invoice' : 'Kwitansi';
+            
+            const opt = {
+                margin:       0,
+                filename:     `${jenis}_PY3_${nama}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, x: 0, y: 0 }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }, 300); // Beri jeda 300ms agar browser selesai scroll ke atas sebelum difoto
     }
 </script>
 
