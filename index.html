@@ -70,8 +70,7 @@
 
         /* Tampilan Dalam Invoice */
         .inv-header { text-align: center; border-bottom: 2px solid #2e7d32; padding-bottom: 15px; margin-bottom: 20px;}
-        .inv-header h1 { color: #2e7d32; margin: 0; font-size: 28px; letter-spacing: 1px;}
-        .inv-header p { margin: 5px 0 0 0; font-size: 14px; color: #555; }
+        .inv-header img { max-height: 100px; width: auto; }
         
         .inv-title { text-align: center; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px;}
         
@@ -170,8 +169,8 @@
         <div class="invoice-panel" id="invoicePDF">
             
             <div class="inv-header">
-                <h1>Pondok Yogya 3</h1>
-                <p>HOMESTAY & KOS</p>
+                <!-- LOGO DARI GOOGLE DRIVE -->
+                <img src="https://drive.google.com/uc?export=view&id=1uT-gYYh_GrLEWTRQmFvcdUdSVwnyzoj8" alt="Logo Pondok Yogya 3">
             </div>
 
             <div class="inv-title">INVOICE</div>
@@ -203,20 +202,21 @@
                         <th style="width: 25%;">Subtotal</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
+                <tbody id="tabelBody">
+                    <!-- BARIS INI AKAN MUNCUL/HILANG SECARA OTOMATIS -->
+                    <tr id="rowHoliday" style="display: none;">
                         <td>Room Rate – Holiday/Peak Season</td>
                         <td class="text-center" id="outMalamHoliday">-</td>
                         <td class="text-right">Rp. 650.000</td>
                         <td class="text-right" id="outSubHoliday">-</td>
                     </tr>
-                    <tr>
+                    <tr id="rowWeekday" style="display: none;">
                         <td>Room Rate - Weekday</td>
                         <td class="text-center" id="outMalamWeekday">-</td>
                         <td class="text-right">Rp. 500.000</td>
                         <td class="text-right" id="outSubWeekday">-</td>
                     </tr>
-                    <tr>
+                    <tr id="rowExtra" style="display: none;">
                         <td>Extra Bed</td>
                         <td class="text-center" id="outMalamExtra">-</td>
                         <td class="text-right" id="outHargaExtra">-</td>
@@ -268,7 +268,7 @@
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
     };
 
-    // Format Tanggal (Misal: 15 Agustus 2026)
+    // Format Tanggal
     const formatTanggal = (tanggal) => {
         if(!tanggal) return "-";
         const dateObj = new Date(tanggal);
@@ -280,18 +280,15 @@
         const today = new Date();
         const tahun = today.getFullYear();
         const bulan = String(today.getMonth() + 1).padStart(2, '0');
-        // Angka acak 3 digit agar unik
         const randomStr = String(Math.floor(Math.random() * 900) + 100); 
         return `INV/PY3/${tahun}/${bulan}/${randomStr}`;
     }
 
-    // Set nilai awal saat halaman diload
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('outNoInv').innerText = generateNomorInvoice();
         document.getElementById('outTglInv').innerText = formatTanggal(new Date());
     });
 
-    // Fungsi update real-time
     function updateInvoice() {
         // Ambil data form
         const nama = document.getElementById('inNama').value || "..................";
@@ -321,17 +318,37 @@
         document.getElementById('outCheckin').innerText = formatTanggal(checkin);
         document.getElementById('outCheckout').innerText = formatTanggal(checkout);
 
-        // Update Tabel
-        document.getElementById('outMalamWeekday').innerText = qtyWeekday > 0 ? qtyWeekday : "-";
-        document.getElementById('outSubWeekday').innerText = subWeekday > 0 ? formatRp(subWeekday) : "-";
+        // LOGIKA MENAMPILKAN / MENYEMBUNYIKAN BARIS TABEL
+        
+        // 1. Holiday
+        if (qtyHoliday > 0) {
+            document.getElementById('rowHoliday').style.display = 'table-row';
+            document.getElementById('outMalamHoliday').innerText = qtyHoliday;
+            document.getElementById('outSubHoliday').innerText = formatRp(subHoliday);
+        } else {
+            document.getElementById('rowHoliday').style.display = 'none';
+        }
 
-        document.getElementById('outMalamHoliday').innerText = qtyHoliday > 0 ? qtyHoliday : "-";
-        document.getElementById('outSubHoliday').innerText = subHoliday > 0 ? formatRp(subHoliday) : "-";
+        // 2. Weekday
+        if (qtyWeekday > 0) {
+            document.getElementById('rowWeekday').style.display = 'table-row';
+            document.getElementById('outMalamWeekday').innerText = qtyWeekday;
+            document.getElementById('outSubWeekday').innerText = formatRp(subWeekday);
+        } else {
+            document.getElementById('rowWeekday').style.display = 'none';
+        }
 
-        document.getElementById('outMalamExtra').innerText = qtyExtra > 0 ? qtyExtra : "-";
-        document.getElementById('outHargaExtra').innerText = hargaExtra > 0 ? formatRp(hargaExtra) : "-";
-        document.getElementById('outSubExtra').innerText = subExtra > 0 ? formatRp(subExtra) : "-";
+        // 3. Extra Bed
+        if (qtyExtra > 0) {
+            document.getElementById('rowExtra').style.display = 'table-row';
+            document.getElementById('outMalamExtra').innerText = qtyExtra;
+            document.getElementById('outHargaExtra').innerText = formatRp(hargaExtra);
+            document.getElementById('outSubExtra').innerText = formatRp(subExtra);
+        } else {
+            document.getElementById('rowExtra').style.display = 'none';
+        }
 
+        // Update Total
         document.getElementById('outTotal').innerText = formatRp(total);
 
         // Status Visual
@@ -350,16 +367,14 @@
         const element = document.getElementById('invoicePDF');
         const nama = document.getElementById('inNama').value || "Tamu";
         
-        // Pengaturan render PDF
         const opt = {
             margin:       0,
             filename:     `Invoice_PY3_${nama}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
+            html2canvas:  { scale: 2, useCORS: true }, // Menambahkan useCORS agar gambar dari drive bisa diproses PDF
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Memanggil Library html2pdf
         html2pdf().set(opt).from(element).save();
     }
 </script>
