@@ -364,17 +364,16 @@
         }
     }
 
-    function cetakPDF() {
+function cetakPDF() {
         const originalElement = document.getElementById('invoicePDF');
         
-        // Kloning elemen invoice agar bisa diolah secara mandiri
+        // Buat kloning elemen invoice
         const clone = originalElement.cloneNode(true);
         
-        // Posisikan elemen klon di koordinat (0,0) di luar area pandang normal
-        clone.style.position = 'fixed';
-        clone.style.left = '0';
+        // Posisikan klon di luar viewport layar agar tetap dapat dirender html2canvas
+        clone.style.position = 'absolute';
+        clone.style.left = '10000px';
         clone.style.top = '0';
-        clone.style.zIndex = '-9999';
         clone.style.margin = '0';
         
         document.body.appendChild(clone);
@@ -395,9 +394,12 @@
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // Render PDF menggunakan elemen klon yang terisolasi
+        // Render PDF dari elemen klon
         html2pdf().set(opt).from(clone).save().then(() => {
             // Hapus elemen klon setelah cetak selesai
+            document.body.removeChild(clone);
+        }).catch(err => {
+            console.error(err);
             document.body.removeChild(clone);
         });
     }
