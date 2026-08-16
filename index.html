@@ -55,16 +55,21 @@
             display: flex;
             justify-content: center;
         }
+        
         .invoice-panel {
             background: white;
             padding: 40px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 210mm;
-            min-height: 297mm;
+            width: 210mm; /* Lebar pasti A4 */
+            height: 297mm; /* Tinggi pasti A4 */
             box-sizing: border-box;
             color: #333;
             font-family: Arial, sans-serif;
-            position: relative;
+            
+            /* Tata letak Flexbox agar footer bisa didorong ke bawah */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Mencegah halaman kedua */
         }
 
         /* Tampilan Header Baru */
@@ -75,18 +80,12 @@
             margin-bottom: 30px;
         }
         
-        .inv-logo {
-            flex: 0 0 35%;
-        }
-        .inv-logo img {
-            max-width: 100%;
-            max-height: 120px;
-            object-fit: contain;
-        }
+        .inv-logo { flex: 0 0 35%; }
+        .inv-logo img { max-width: 100%; max-height: 120px; object-fit: contain; }
 
         .inv-header-right {
             flex: 0 0 55%;
-            background-color: #053b0e; /* Warna Hijau Gelap */
+            background-color: #053b0e;
             border-radius: 8px;
             padding: 25px 30px;
             display: flex;
@@ -96,22 +95,8 @@
             box-sizing: border-box;
         }
 
-        .inv-title { 
-            color: white; 
-            font-size: 32px; 
-            font-weight: bold; 
-            letter-spacing: 2px; 
-            margin-bottom: 15px;
-        }
-        
-        .inv-status { 
-            background-color: white; 
-            padding: 8px 20px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            font-size: 14px;
-            color: #333;
-        }
+        .inv-title { color: white; font-size: 32px; font-weight: bold; letter-spacing: 2px; margin-bottom: 15px;}
+        .inv-status { background-color: white; padding: 8px 20px; border-radius: 4px; font-weight: bold; font-size: 14px; color: #333;}
         .text-belum { color: #cc0000; }
         .text-lunas { color: #008000; }
 
@@ -133,6 +118,12 @@
         .inv-notes { font-size: 11px; margin-bottom: 30px;}
         .inv-notes h4 { margin: 0 0 5px 0; font-size: 12px; }
         .inv-notes ul { margin: 0; padding-left: 15px; }
+        
+        /* Modifikasi Posisi Footer */
+        .footer-wrapper {
+            margin-top: auto; /* Mendorong footer ke ujung bawah kotak flexbox */
+            width: 100%;
+        }
         
         .inv-footer { border-top: 2px solid #053b0e; padding-top: 10px; text-align: center; font-size: 12px; color: #555;}
         .inv-footer strong { color: #053b0e; display: block; font-size: 14px; margin-bottom: 3px;}
@@ -179,10 +170,8 @@
     <div class="invoice-wrapper">
         <div class="invoice-panel" id="invoicePDF">
             
-            <!-- HEADER BARU -->
             <div class="inv-top-header">
                 <div class="inv-logo">
-                    <!-- LINK RAW GITHUB LOGO -->
                     <img src="https://raw.githubusercontent.com/pondokyogya3id/invoice/main/logo.png" alt="Logo Pondok Yogya 3">
                 </div>
                 <div class="inv-header-right">
@@ -260,7 +249,8 @@
                 </ul>
             </div>
 
-            <div style="position: absolute; bottom: 40px; left: 40px; right: 40px;">
+            <!-- Bagian Footer dengan Flexbox Auto-Margin -->
+            <div class="footer-wrapper">
                 <div class="inv-footer">
                     <strong>HUBUNGI KAMI</strong>
                     089501808049 (Marketing) | pondokyogya3.id@gmail.com<br>
@@ -361,11 +351,12 @@
         const element = document.getElementById('invoicePDF');
         const nama = document.getElementById('inNama').value || "Tamu";
         
+        // Penambahan scrollY: 0 untuk menghindari PDF terpotong/turun
         const opt = {
             margin:       0,
             filename:     `Invoice_PY3_${nama}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true }, /* MENGIZINKAN PENGAMBILAN GAMBAR DARI LUAR SERVER */
+            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
